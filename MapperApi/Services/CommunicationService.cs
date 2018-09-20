@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace Mapper_Api.Services
 {
-    public class CommunicationService
+    public partial class CommunicationService
     {
         WeatherService WeatherService;
         CourseDb CourseDb;
@@ -20,7 +20,7 @@ namespace Mapper_Api.Services
             this.CourseDb = CourseDB;
             this.WeatherService = WeatherService;
         }
-        
+
         public async Task SocketHandler(HttpContext context, WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
@@ -43,88 +43,41 @@ namespace Mapper_Api.Services
             return new ArraySegment<Byte>(Encoding.ASCII.GetBytes(result.ToString()));
         }
 
-        private async Task<List<LiveLocationMessage>> interpretInput(string query)
+        private async Task<ReturnMessage> interpretInput(string query)
         {
-            var newList = new List<LiveLocationMessage>();
             try
             {
                 var inputData = JsonConvert.DeserializeObject<LiveLocationMessage>(query);
                 LiveUser liveUser = null;
-                if (inputData.UserID != null)
-                {
-                    liveUser = CourseDb.LiveUser.Where(c => c.UserID == inputData.UserID).SingleOrDefault();
-                }
 
-                if (liveUser == null)
+                if ((liveUser = CourseDb.LiveUser
+                        .Where(c => c.UserID == inputData.UserID).SingleOrDefault()) == null)
                 {
-                    liveUser = new LiveUser
+                    liveUser = new LiveUser()
                     {
-                        UserID = new Guid()
+                        UserID = Guid.NewGuid()
                     };
-
                     CourseDb.LiveUser.Add(liveUser);
                 }
-                string additionalInfo = "";
-
-                if (inputData.Location != null){
-                    CourseDb.LiveLocation.Add(new LiveLocation {
-                        UserID = liveUser.UserID, 
-                        GeoJson = inputData.Location
-                    });
-                    additionalInfo += inputData.Location;
-                }
-
-                await CourseDb.SaveChangesAsync();
-
-                if (inputData.UserID != null)
+                if (inputData.Location != null)
                 {
-                    newList.Add(new LiveLocationMessage()
+                    CourseDb.LiveLocation.Add(new LiveLocation
                     {
                         UserID = liveUser.UserID,
-                        Device = inputData.Device,
-                        Location = @"User Sent us info already yay " + additionalInfo
+                        GeoJson = inputData.Location
                     });
                 }
-                else
-                {
-                    if (inputData.Device == LiveLocationMessage.DeviceType.MONITOR)
-                    {
-                        newList.Add(new LiveLocationMessage()
-                        {
-                            UserID = liveUser.UserID,
-                            Device = inputData.Device,
-                            Location = " User Created as MONITOR "
-                        });
-                    }
-                    if (inputData.Device == LiveLocationMessage.DeviceType.APPLICATION)
-                    {
-                        newList.Add(new LiveLocationMessage()
-                        {
-                            UserID = liveUser.UserID,
-                            Device = inputData.Device,
-                            Location = "User Created as APPLICATION"
-                        });
-                    }
-                    if (inputData.Device == null && inputData.UserID == Guid.Empty)
-                    {
-                        newList.Add(new LiveLocationMessage()
-                        {
-                            UserID = liveUser.UserID,
-                            Location = "User Created type unknown"
-                        });
-                    }
-                }
+                await CourseDb.SaveChangesAsync();
+             
+                return new ReturnMessage(){
+                        Weather = "User string", 
+                        UserID = liveUser.UserID
+                    };
             }
-
             catch (Exception e)
             {
-                newList.Add(new LiveLocationMessage()
-                {
-                    UserID = Guid.Empty, 
-                    Location = e.Message
-                });
+             throw new ArgumentException("Invalid user id or location");
             }
-            return newList;
         }
     }
 }

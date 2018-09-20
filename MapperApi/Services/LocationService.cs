@@ -43,6 +43,35 @@ namespace Mapper_Api.Services
             List<Course> list = await _db.Courses.FromSql(query).ToListAsync();
             return list;
         }
+
+        public async Task<IEnumerable<LiveLocation>> getRecentPlayerLocation(String courseID){
+            string query = @"(SELECT l.""UserID"", MIN(ST_AsGeoJson(ST_geomFromWKB(l.""PointRaw""))) AS 
+            PlayerLocation From public.""LiveLocation"" l WHERE 
+            ST_Contains(	
+                    (SELECT 
+                        ST_Buffer(
+                            (SELECT (ST_Centroid(ST_Union(ST_GeomFromWKB(ie.""PointRaw"")))) FROM
+                                public.""Elements"" ie WHERE ie.""CourseId"" = '@Param1'),
+                            (SELECT max(ST_DistanceSphere(
+                                ST_geomFromWKB(e.""PolygonRaw""), 
+                                (SELECT (ST_Centroid(ST_Union(ST_GeomFromWKB(ie.""PointRaw"")))) FROM 
+                                public.""Elements"" ie
+                                WHERE ie.""CourseId"" = '@Param1')
+                            ))
+                            FROM public.""Elements"" e 
+                            WHERE e.""CourseId"" = '@Param1')/1000,
+                        'quad_segs=8'
+                        )),
+                    ST_GeomFromWKB(l.""PointRaw"")
+            ) AND (EXTRACT(MINUTE FROM  (now() - l.""CreatedAt"")) < 10)
+            GROUP BY l.""UserID""
+            ORDER BY MIN(l.""CreatedAt"")
+            )";
+            query = query.Replace("@Param" , courseID);
+
+            List<LiveLocation> list = await _db.LiveLocation.FromSql(query).ToListAsync();
+            return list;
+        }
         
     }
 }

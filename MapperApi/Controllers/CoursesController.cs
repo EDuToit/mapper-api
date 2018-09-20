@@ -76,6 +76,14 @@ namespace Mapper_Api.Controllers
                     new {id = course.CourseId}, course);
         }
 
+// GET: api/courses
+        [Route("api/courses/test/{CourseID}")]
+        [HttpGet]
+        public async Task<IEnumerable<LiveLocation>> getLiveLocation([FromRoute]String CourseID)
+        {
+            return await locationService.getRecentPlayerLocation(CourseID); //TODO test this
+        }
+
 
         // GET: api/courses
         [Route("api/courses")]
