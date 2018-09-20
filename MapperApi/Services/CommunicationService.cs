@@ -45,11 +45,10 @@ namespace Mapper_Api.Services
 
         private async Task<ReturnMessage> interpretInput(string query)
         {
+            LiveUser liveUser = null;
             try
             {
                 var inputData = JsonConvert.DeserializeObject<LiveLocationMessage>(query);
-                LiveUser liveUser = null;
-
                 if ((liveUser = CourseDb.LiveUser
                         .Where(c => c.UserID == inputData.UserID).SingleOrDefault()) == null)
                 {
@@ -68,15 +67,26 @@ namespace Mapper_Api.Services
                     });
                 }
                 await CourseDb.SaveChangesAsync();
-             
-                return new ReturnMessage(){
-                        Weather = "User string", 
-                        UserID = liveUser.UserID
-                    };
+                var coords = JsonConvert
+                            .DeserializeObject<GeoJSON.Net.Geometry.Point>(inputData.Location).Coordinates;
+                var weather = await WeatherService.GetWeatherInLatLng(coords.Latitude, coords.Longitude);
+                return new ReturnMessage()
+                {
+                    Weather = JsonConvert.SerializeObject(new {
+                        temp = weather.main.temp, 
+                        wind = weather.Wind
+                    }),
+                    UserID = liveUser.UserID
+                };
             }
-            catch (Exception e)
+            catch (Exception)
             {
-             throw new ArgumentException("Invalid user id or location");
+                return new ReturnMessage()
+                {
+                    Weather = "--",
+                    UserID = liveUser.UserID
+                };
+                throw new ArgumentException("Invalid user id or location");
             }
         }
     }

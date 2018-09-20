@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
@@ -9,6 +8,7 @@ using Newtonsoft.Json;
 
 namespace Mapper_Api.Services
 {
+
     public class WeatherService
     {
         string AppKey;
@@ -18,14 +18,9 @@ namespace Mapper_Api.Services
             this.AppKey = appKey;
         }
 
-        public async Task<string> GetWeatherInLatLng(double Lat, double Lng)
+        public async Task<WeatherResult> GetWeatherInLatLng(double Lat, double Lng)
         {
-            // todo override
-            double
-            lat = -25.768926,
-            lng = 28.242805;
-
-            string baseUrl = $"http://api.openweathermap.org/data/2.5/weather?lat={lat.ToString()}&lon={lng.ToString()}&appid={this.AppKey}";
+            string baseUrl = $"http://api.openweathermap.org/data/2.5/weather?lat={Lat.ToString()}&lon={Lng.ToString()}&appid={this.AppKey}";
             using (HttpClient client = new HttpClient())
             using (HttpResponseMessage res = await client.GetAsync(baseUrl))
             using (HttpContent content = res.Content)
@@ -33,9 +28,9 @@ namespace Mapper_Api.Services
                 string data = await content.ReadAsStringAsync();
                 if (data != null)
                 {
-                    return data;
+                    return (JsonConvert.DeserializeObject<WeatherResult>(data));
                 }
-                return "";
+                return null;
             }
         }
     }
