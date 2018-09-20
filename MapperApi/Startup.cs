@@ -83,7 +83,6 @@ namespace Mapper_Api
                     ValidateAudience = false
                 };
             });
-            services.AddScoped<CourseService>();
             var connectionString =
                     Configuration.GetConnectionString("MapperContext");
             services.AddEntityFrameworkNpgsql()
