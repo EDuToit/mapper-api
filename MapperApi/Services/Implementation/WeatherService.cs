@@ -27,7 +27,7 @@ namespace Mapper_Api.Services
             this.AppKey = appKey;
         }
 
-        public async Task<string> GetWeatherInLatLng(double Lat, double Lng)
+        public async Task<string> GetWeatherInLatLng(double lat, double lng)
         {
             string baseUrl = $"http://api.openweathermap.org/data/2.5/weather?lat={lat.ToString()}&lon={lng.ToString()}&appid={this.AppKey}";
             using (HttpClient client = new HttpClient())

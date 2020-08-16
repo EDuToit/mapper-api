@@ -3,15 +3,16 @@ version: '3'
 services:
 
 services:
+  db:
+    image: "mdillon/postgis"
+    environment:
+        POSTGRES_PASSWORD: "admin"
+        POSTGRES_USER: "admin"
+
   mapperapi:
     image: mapperapi
+    ports: 
+      - 80:80
     build:
       context: .
       dockerfile: Dockerfile
-      depends_on:
-          - db
-    db:
-        image: "mdillon/postgis"
-        environment:
-            POSTGRES_PASSWORD: "admin"
-            POSTGRES_USER: "admin"

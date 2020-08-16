@@ -31,7 +31,7 @@ namespace Mapper_Api
                             new ConfigurationBuilder()
                                     .SetBasePath(
                                             Directory.GetCurrentDirectory())
-                                    .AddJsonFile("hosting.json", true)
+                                    // .AddJsonFile("hosting.json", true)
                                     .Build())
                     .UseStartup<Startup>()
                     .Build();
